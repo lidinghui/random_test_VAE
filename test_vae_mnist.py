@@ -28,7 +28,7 @@ def test_vae():
     full_weights_init = Orthogonal()
     weights_init = full_weights_init
     
-    layers = [784, 800, 800, 800, 50]
+    layers = [784, 400, 20]
     encoder_layers = layers[:-1]
     encoder_mlp = MLP([activation] * (len(encoder_layers)-1),
               encoder_layers,
@@ -49,9 +49,9 @@ def test_vae():
     vae.initialize()
 
     x = T.matrix('features')
-    batch_size = 512
+    batch_size = 124
     x_recons, kl_terms = vae.reconstruct(x)
-    recons_term = BinaryCrossEntropy().apply(x, T.clip(x_recons, 1e-4, 1 - 1e-4))
+    recons_term = BinaryCrossEntropy().apply(x, T.clip(x_recons, 1e-5, 1 - 1e-5))
     recons_term.name = "recons_term"
 
     cost = recons_term + kl_terms.mean()
@@ -62,7 +62,7 @@ def test_vae():
         t.name = t.name+str(i)+"vae_mnist"
 
 
-    step_rule = RMSProp(0.0001, 0.95)
+    step_rule = RMSProp(0.001, 0.95)
 
     train_set = MNIST('train')
 
@@ -83,15 +83,15 @@ def test_vae():
                                 step_rule=step_rule)
 
     monitor_train = TrainingDataMonitoring(
-        variables=[cost], prefix="train", every_n_epochs=1)
+        variables=[cost], prefix="train", every_n_batches=10)
     monitor_valid = DataStreamMonitoring(
-        variables=[cost], data_stream=data_stream_test, prefix="valid", every_n_epochs=1)
+        variables=[cost], data_stream=data_stream_test, prefix="valid", every_n_batches=10)
 
     # drawing_samples = ImagesSamplesSave("../data_mnist", vae, (28, 28), every_n_epochs=1)
     extensions = [  monitor_train,
                     monitor_valid,
-                    FinishAfter(after_n_epochs=400),
-                    Printing(every_n_epochs=1)
+                    FinishAfter(after_n_batches=1500),
+                    Printing(every_n_batches=10)
                   ]
 
     main_loop = MainLoop(data_stream=data_stream,
