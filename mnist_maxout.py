@@ -29,7 +29,7 @@ from blocks.algorithms import Momentum, RMSProp, Scale
 
 floatX = theano.config.floatX
 #import h5py
-#from contextlib import closing
+from contextlib import closing
 #from momentum import Momentum_dict
 #import re
 from maxout_extension import Clip_param
@@ -220,6 +220,10 @@ def maxout_mnist_test():
                         algorithm=algorithm, model = Model(cost),
                         extensions=extensions)
     main_loop.run()
+
+    from blocks.serialization import dump
+    with closing(open('../data_mnist/maxout', 'w')) as f:
+	    dump(vae, f)
 
 
 if __name__ == '__main__':
