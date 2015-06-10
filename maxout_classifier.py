@@ -11,15 +11,13 @@ from convolution_stride import ConvolutionalLayer, Maxout_
 from blocks.bricks import Linear
 floatX = theano.config.floatX
 from blocks.bricks.conv import Flattener
+from blocks.bricks import Initializable
 
-from blocks.graph import ComputationGraph
-from blocks.filter import VariableFilter
-from blocks.roles import WEIGHT, BIAS
 
-class Maxout(object):
+class Maxout(Initializable):
     
-    def __init__(self):
-
+    def __init__(self, **kwargs):
+        super(Maxout, self).__init__(**kwargs)
         filter_size = (8, 8)
         activation = Maxout_(num_pieces=2).apply
         pooling_size = 4
@@ -86,16 +84,7 @@ class Maxout(object):
                         biases_init=Uniform(width=0.01), name="layer_5_maxout")
         self.mlp_layer.initialize()
 
-        # test shape layer0
-        x = T.matrix()
-        weight = VariableFilter(roles=[WEIGHT, BIAS])(ComputationGraph(
-                                                        T.sum(self.mlp_layer.apply(x))
-                                                        ))
-
-        for w in weight:
-            print (w.name, w.get_value().shape)
-
-
+    @application(inputs=['input_'], outputs=['output_'])
     def apply(self, input_):
         output_conv = input_
         for layer in self.conv_layers:
@@ -103,4 +92,3 @@ class Maxout(object):
         output_conv = Flattener().apply(output_conv)
         output_ = self.mlp_layer.apply(output_conv)
         return output_
-        
